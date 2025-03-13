@@ -33,11 +33,27 @@ class Sakuma_ekrans(QMainWindow):
         self.setWindowTitle("Sakuma")
         self.setGeometry(100, 100, 400, 300)
 
-        self.button = QPushButton("Open Second Window", self)
-        self.button.clicked.connect(self.Parada_Galveno)
-        self.setCentralWidget(self.button)
+        self.turpinat = QPushButton("Turpinat", self)
+        self.turpinat.clicked.connect(self.Parada_Galveno)
+        self.setCentralWidget(self.turpinat)
 
-        self.Galvenais_Ekraans = None  # To store reference to the second window
+        self.autori = QPushButton("Autori", self)
+        self.autori.clicked.connect(self.Parada_autors)
+        self.setCentralWidget(self.autori)
+
+        # self.iziet = QPushButton("Iziet", self)
+        # self.iziet.clicked.connect(self.iziet_poga)
+        # self.setCentralWidget(self.iziet_poga)
+
+        self.Galvenais_Ekraans = None
+
+    # def iziet_poga(self):
+    #     self.close()
+
+    def Parada_autors(self):
+        self.autors = QLabel("Autors: Ēriks", self)
+        self.autors.show()
+        self.hide()
 
     def Parada_Galveno(self):
         if self.Galvenais_Ekraans is None or not self.Galvenais_Ekraans.isVisible():
@@ -155,7 +171,9 @@ class Galvenais_Ekraans(QMainWindow):
     def Atskano(self):
         dziesmas_cels = os.path.join(dir, "Muzika", f"{self.izveleta_grupa}", f"{self.izveleta_dziesma}.wav")
 
-        if os.path.exists(dziesmas_cels):
+        if not os.path.exists(dziesmas_cels):
+            print(f"Nevar atrast dziesmu: {dziesmas_cels}")
+        else:
             pygame.mixer.init()
             pygame.mixer.music.load(dziesmas_cels)
             pygame.mixer.music.play()
