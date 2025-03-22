@@ -104,6 +104,13 @@ class Galvenais_Ekraans(QMainWindow):
         self.layout = QVBoxLayout() 
         self.central_widget.setLayout(self.layout)
 
+        self.setStyleSheet("background-color: #1e1e1e;")
+
+        self.tokeni = 3
+        self.izveleta_grupa = None
+        self.izveleta_dziesma = None
+
+
         # no sakuma paslepj galveno ekranu
         self.init_ui()
         self.sakuma_ekrans = Sakuma_ekrans()
@@ -111,18 +118,22 @@ class Galvenais_Ekraans(QMainWindow):
 
         # IZVEIDO POGAS TAA LAI NEBUTU KATRU REIZI VINAS JATAISA
         self.PLAYbutton = QPushButton("Atskaņot dziesmu", self)
+        self.PLAYbutton.setStyleSheet("background-color: orange;")
         self.PLAYbutton.clicked.connect(lambda: self.Atskano())
         self.PLAYbutton.hide()
 
         self.STOPbutton = QPushButton("Apturēt mūziku", self)
+        self.STOPbutton.setStyleSheet("background-color: yellow;")
         self.STOPbutton.clicked.connect(lambda: pygame.mixer.music.pause())
         self.STOPbutton.hide()
 
         self.RESUMEbutton = QPushButton("Turpināt mūziku", self)
+        self.RESUMEbutton.setStyleSheet("background-color: green;")
         self.RESUMEbutton.clicked.connect(lambda: pygame.mixer.music.unpause())
         self.RESUMEbutton.hide()
 
         self.EXITbutton = QPushButton("IZLAIST", self)
+        self.EXITbutton.setStyleSheet("background-color: red; color: white;")
         self.EXITbutton.clicked.connect(self.back_to_the_lobby)
         self.EXITbutton.hide()
 
@@ -133,9 +144,18 @@ class Galvenais_Ekraans(QMainWindow):
         
     
     def init_ui(self):
+        if self.tokeni == 0:
+            self.result_label = QLabel("Tevis nav pietiekami daudz kredītu!", self)
+            self.result_label.setStyleSheet("font-size: 18px; font-weight: bold; color: red;")
+            self.layout.addWidget(self.result_label)
+            return
         self.result_label = QLabel("Izvēlies grupu, metot kauliņu!", self)
         self.result_label.setStyleSheet("font-size: 18px; font-weight: bold; color: red;")
         self.layout.addWidget(self.result_label)
+
+        self.tokeni_label = QLabel(f"Atlikušie kredīti: {self.tokeni}", self)
+        self.tokeni_label.setStyleSheet("font-size: 10px; font-weight: bold; color: yellow;")
+        self.layout.addWidget(self.tokeni_label)
         
         for i in range(1, 7):
             grupa_nosaukums = Grupa[i]["nosaukums"]
@@ -152,6 +172,7 @@ class Galvenais_Ekraans(QMainWindow):
                 self.layout.addWidget(attela_label)
         
         self.button = QPushButton("Mest kauliņu", self)
+        self.button.setStyleSheet("background-color: GREEN; color: white;font-weight: bold;")
         self.button.clicked.connect(self.mest_kaulinu_grupa)
         self.layout.addWidget(self.button)
     
@@ -178,6 +199,7 @@ class Galvenais_Ekraans(QMainWindow):
             self.layout.addWidget(attela_label)
         
         self.button = QPushButton("Mest kauliņu vēlreiz, lai izvēlētos dziesmu", self)
+        self.button.setStyleSheet("background-color: GREEN; color: white;font-weight: bold;")
         self.button.clicked.connect(lambda: self.mest_kaulinu_dziesma(grupas_indekss))
         self.layout.addWidget(self.button)
     
@@ -206,7 +228,7 @@ class Galvenais_Ekraans(QMainWindow):
         attela_label.setPixmap(bilde)
         self.layout.addWidget(attela_label)
 
-        self.EXITbutton.setStyleSheet("background-color: red; color: white;")
+        
 
         self.PLAYbutton.show()
         self.STOPbutton.show()
@@ -214,28 +236,45 @@ class Galvenais_Ekraans(QMainWindow):
         self.EXITbutton.show()
 
         self.layout.addWidget(self.PLAYbutton)
-        self.layout.addWidget(self.STOPbutton)
         self.layout.addWidget(self.RESUMEbutton)
+        self.layout.addWidget(self.STOPbutton)
         self.layout.addWidget(self.EXITbutton)
 
     def Atskano(self):
         dziesmas_cels = os.path.join(dir, "Muzika", f"{self.izveleta_grupa}", f"{self.izveleta_dziesma}.wav")
+        self.tokeni -= 1
+        self.tokeni_label.setText(f"Atlikušie kredīti: {self.tokeni}")
+
+
+        self.EXITbutton.clicked.connect(pygame.mixer.music.stop)
 
         if not os.path.exists(dziesmas_cels):
             print(f"Nevar atrast dziesmu: {dziesmas_cels}")
+            self.PLAYbutton.setEnabled(True)
+            self.RESUMEbutton.setEnabled(False)
+            self.STOPbutton.setEnabled(False)
         else:
             pygame.mixer.init()
             pygame.mixer.music.load(dziesmas_cels)
             pygame.mixer.music.play()
             print(f"Atskaņo: {dziesmas_cels}")
 
-            if pygame.mixer.music.get_busy():
-                self.PLAYbutton.setEnabled(False)
-                self.RESUMEbutton.setEnabled(True)
-                self.STOPbutton.setEnabled(True)
-            else:
-                self.RESUMEbutton.setEnabled(False)
-                self.STOPbutton.setEnabled(False)
+            self.PLAYbutton.setEnabled(False)
+            self.RESUMEbutton.setEnabled(False)
+            self.STOPbutton.setEnabled(True)
+
+            def updatot_pogas():
+                if pygame.mixer.music.get_busy():
+                    self.RESUMEbutton.setEnabled(True)
+                    self.STOPbutton.setEnabled(True)
+                else:
+                    self.RESUMEbutton.setEnabled(False)
+                    self.STOPbutton.setEnabled(False)
+
+            QTimer.singleShot(200, updatot_pogas)
+
+        
+
         
 
 
