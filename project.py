@@ -4,7 +4,7 @@ import sys
 import pygame
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QWidget, QVBoxLayout
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 
 dir = os.getcwd()  # Atrod pašreizējā skripta mapi
 
@@ -22,44 +22,74 @@ def clear_layout(layout):
     while layout.count():
         item = layout.takeAt(0)
         if item.widget():
-            item.widget().setParent(None)
-            del item
+            item.widget().deleteLater()
 
 
+class AutoriLogs(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Autori")
+        self.setGeometry(150, 150, 300, 200)
+        self.setStyleSheet("background-color: #1e1e1e;")
+
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        autors_label = QLabel("Autors: Ēriks")
+        autors_label.setStyleSheet("background-color: 1e1e1e; color: white;"
+                                    "font-size: 18px; font-weight: bold;")
+        layout.addWidget(autors_label)
+
+        aizvert_poga = QPushButton("Aizvērt")
+        aizvert_poga.setStyleSheet("background-color: BLACK; color: white;")
+        aizvert_poga.clicked.connect(self.close)
+        layout.addWidget(aizvert_poga)
 
 class Sakuma_ekrans(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Sakuma")
         self.setGeometry(100, 100, 400, 300)
+        app.setStyleSheet("QMainWindow { background-color: #1e1e1e; }")
 
-        self.turpinat = QPushButton("Turpinat", self)
+        self.central_widget = QWidget(self)
+        self.setCentralWidget(self.central_widget)
+
+        self.layout = QVBoxLayout()  # Vertikālais izkārtojums
+        self.central_widget.setLayout(self.layout)
+
+
+        # Izveido pogas
+        self.turpinat = QPushButton("Turpināt", self)
         self.turpinat.clicked.connect(self.Parada_Galveno)
-        self.setCentralWidget(self.turpinat)
+        self.turpinat.setStyleSheet("background-color: GREEN; color: white;")
+        self.layout.addWidget(self.turpinat)
 
         self.autori = QPushButton("Autori", self)
         self.autori.clicked.connect(self.Parada_autors)
-        self.setCentralWidget(self.autori)
+        self.autori.setStyleSheet("background-color: YELLOW; color: black;")
+        self.layout.addWidget(self.autori)
 
-        # self.iziet = QPushButton("Iziet", self)
-        # self.iziet.clicked.connect(self.iziet_poga)
-        # self.setCentralWidget(self.iziet_poga)
+        self.iziet = QPushButton("Iziet", self)
+        self.iziet.clicked.connect(self.close)
+        self.iziet.setStyleSheet("background-color: red; color: white;")
+        self.layout.addWidget(self.iziet)
 
         self.Galvenais_Ekraans = None
-
-    # def iziet_poga(self):
-    #     self.close()
+        self.AutoruLogs = None
 
     def Parada_autors(self):
-        self.autors = QLabel("Autors: Ēriks", self)
-        self.autors.show()
-        self.hide()
+        if self.AutoruLogs is None or not self.AutoruLogs.isVisible():
+            self.AutoruLogs = AutoriLogs()
+            self.AutoruLogs.show()
 
     def Parada_Galveno(self):
         if self.Galvenais_Ekraans is None or not self.Galvenais_Ekraans.isVisible():
             self.Galvenais_Ekraans = Galvenais_Ekraans()
             self.Galvenais_Ekraans.show()
             self.hide()
+    
 
 
 class Galvenais_Ekraans(QMainWindow):
@@ -76,6 +106,7 @@ class Galvenais_Ekraans(QMainWindow):
 
         # no sakuma paslepj galveno ekranu
         self.init_ui()
+        self.sakuma_ekrans = Sakuma_ekrans()
 
 
         # IZVEIDO POGAS TAA LAI NEBUTU KATRU REIZI VINAS JATAISA
@@ -90,14 +121,26 @@ class Galvenais_Ekraans(QMainWindow):
         self.RESUMEbutton = QPushButton("Turpināt mūziku", self)
         self.RESUMEbutton.clicked.connect(lambda: pygame.mixer.music.unpause())
         self.RESUMEbutton.hide()
+
+        self.EXITbutton = QPushButton("IZLAIST", self)
+        self.EXITbutton.clicked.connect(self.back_to_the_lobby)
+        self.EXITbutton.hide()
+
+    def back_to_the_lobby(self):
+        self.close()
+        self.sakuma_ekrans.show()
+
+        
     
     def init_ui(self):
         self.result_label = QLabel("Izvēlies grupu, metot kauliņu!", self)
+        self.result_label.setStyleSheet("font-size: 18px; font-weight: bold; color: red;")
         self.layout.addWidget(self.result_label)
         
         for i in range(1, 7):
             grupa_nosaukums = Grupa[i]["nosaukums"]
             grupa_label = QLabel(grupa_nosaukums, self)
+            grupa_label.setStyleSheet("color: white;")
             self.layout.addWidget(grupa_label)
             
             attela_cels = os.path.join(dir, f"{grupa_nosaukums}.png")
@@ -118,10 +161,12 @@ class Galvenais_Ekraans(QMainWindow):
         grupas_indekss = random.randint(1, 6)
         self.izveleta_grupa = Grupa[grupas_indekss]["nosaukums"]
         self.result_label = QLabel(f"Tava izvēlētā grupa: {self.izveleta_grupa}", self)
+        self.result_label.setStyleSheet("font-size: 18px; font-weight: bold; color: red;")
         self.layout.addWidget(self.result_label)
         
         for dziesma in Grupa[grupas_indekss]["dziesmas"]:
             dziesma_label = QLabel(dziesma, self)
+            dziesma_label.setStyleSheet("color: white;")
             self.layout.addWidget(dziesma_label)
             
         attela_cels = os.path.join(dir, f"{self.izveleta_grupa}.png")
@@ -150,7 +195,8 @@ class Galvenais_Ekraans(QMainWindow):
     
     def muzikas_bilde(self):
 
-        clear_layout(self.layout)
+        if self.layout.count() > 0:
+            clear_layout(self.layout)
 
         attela_cels = os.path.join(dir, f"{self.izveleta_grupa}.png")
 
@@ -160,13 +206,17 @@ class Galvenais_Ekraans(QMainWindow):
         attela_label.setPixmap(bilde)
         self.layout.addWidget(attela_label)
 
+        self.EXITbutton.setStyleSheet("background-color: red; color: white;")
+
         self.PLAYbutton.show()
         self.STOPbutton.show()
         self.RESUMEbutton.show()
+        self.EXITbutton.show()
 
         self.layout.addWidget(self.PLAYbutton)
         self.layout.addWidget(self.STOPbutton)
         self.layout.addWidget(self.RESUMEbutton)
+        self.layout.addWidget(self.EXITbutton)
 
     def Atskano(self):
         dziesmas_cels = os.path.join(dir, "Muzika", f"{self.izveleta_grupa}", f"{self.izveleta_dziesma}.wav")
@@ -178,14 +228,15 @@ class Galvenais_Ekraans(QMainWindow):
             pygame.mixer.music.load(dziesmas_cels)
             pygame.mixer.music.play()
             print(f"Atskaņo: {dziesmas_cels}")
-            pygame.time.delay(500)
 
             if pygame.mixer.music.get_busy():
+                self.PLAYbutton.setEnabled(False)
                 self.RESUMEbutton.setEnabled(True)
                 self.STOPbutton.setEnabled(True)
             else:
                 self.RESUMEbutton.setEnabled(False)
                 self.STOPbutton.setEnabled(False)
+        
 
 
 if __name__ == "__main__":
