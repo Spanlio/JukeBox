@@ -106,7 +106,6 @@ class Galvenais_Ekraans(QMainWindow):
 
         self.setStyleSheet("background-color: #1e1e1e;")
 
-        self.tokeni = 3
         self.izveleta_grupa = None
         self.izveleta_dziesma = None
 
@@ -144,19 +143,10 @@ class Galvenais_Ekraans(QMainWindow):
         
     
     def init_ui(self):
-        if self.tokeni == 0:
-            self.result_label = QLabel("Tevis nav pietiekami daudz kredītu!", self)
-            self.result_label.setStyleSheet("font-size: 18px; font-weight: bold; color: red;")
-            self.layout.addWidget(self.result_label)
-            return
         self.result_label = QLabel("Izvēlies grupu, metot kauliņu!", self)
         self.result_label.setStyleSheet("font-size: 18px; font-weight: bold; color: red;")
         self.layout.addWidget(self.result_label)
 
-        self.tokeni_label = QLabel(f"Atlikušie kredīti: {self.tokeni}", self)
-        self.tokeni_label.setStyleSheet("font-size: 10px; font-weight: bold; color: yellow;")
-        self.layout.addWidget(self.tokeni_label)
-        
         for i in range(1, 7):
             grupa_nosaukums = Grupa[i]["nosaukums"]
             grupa_label = QLabel(grupa_nosaukums, self)
@@ -242,9 +232,6 @@ class Galvenais_Ekraans(QMainWindow):
 
     def Atskano(self):
         dziesmas_cels = os.path.join(dir, "Muzika", f"{self.izveleta_grupa}", f"{self.izveleta_dziesma}.wav")
-        self.tokeni -= 1
-        self.tokeni_label.setText(f"Atlikušie kredīti: {self.tokeni}")
-
 
         self.EXITbutton.clicked.connect(pygame.mixer.music.stop)
 
