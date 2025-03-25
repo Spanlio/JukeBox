@@ -24,6 +24,13 @@ def clear_layout(layout):
         if item.widget():
             item.widget().deleteLater()
 
+def saglabat_statistiku(grupa, dziesma):
+    faila_nosaukums = "statistika.txt"
+    try:
+        with open(faila_nosaukums, "a", encoding="utf-8") as fails:
+            fails.write(f"Izvēlēta grupa: {grupa} | Dziesma: {dziesma}\n")
+    except Exception as e:
+        print(f"Kļūda saglabājot statistiku: {e}")
 
 class AutoriLogs(QWidget):
     def __init__(self):
@@ -35,6 +42,7 @@ class AutoriLogs(QWidget):
 
         layout = QVBoxLayout()
         self.setLayout(layout)
+        
 
         autors_label = QLabel("Autors: Ēriks")
         autors_label.setStyleSheet("background-color: 1e1e1e; color: white;"
@@ -45,6 +53,36 @@ class AutoriLogs(QWidget):
         aizvert_poga.setStyleSheet("background-color: BLACK; color: white;")
         aizvert_poga.clicked.connect(self.close)
         layout.addWidget(aizvert_poga)
+
+class NoteikumuLogs(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Noteikumi")
+        self.setGeometry(150, 150, 600, 500)
+        self.setStyleSheet("background-color: #1e1e1e;")
+
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        Noteikumi = QLabel("""Spēles noteikumi :
+                1. Sākumā spied "Turpināt", lai nonāktu spēles galvenajā ekrānā.
+                2. Spied pogu "Mest kauliņu", lai nejauši izvēlētos kādu no sešām grupām.
+                3. Kad grupa ir izvēlēta, spied pogu Mest kauliņu vēlreiz, lai nejauši izvēlētos vienu no sešām dziesmām šajā grupā.
+                4. Kad dziesma ir izvēlēta, tā tiek parādīta ekrānā, un tu vari to atskaņot, nospiežot pogu Atskaņot dziesmu.
+                5. Ja vēlies, vari apturēt vai turpināt mūzikas atskaņošanu ar atbilstošajām pogām.
+                6. Ja gribi izvēlēties jaunu dziesmu, spied "IZLAIST", lai atgrieztos sākumā un sāktu no jauna.
+                7. Visa tava izvēlētā mūzika tiek saglabāta statistikā, lai vēlāk varētu redzēt, ko esi klausījies!""")
+
+        Noteikumi.setStyleSheet("background-color: 1e1e1e; color: white;"
+                                    "font-size: 18px; font-weight: bold;")
+        layout.addWidget(Noteikumi)
+
+        aizvert_poga = QPushButton("Aizvērt")
+        aizvert_poga.setStyleSheet("background-color: BLACK; color: white;")
+        aizvert_poga.clicked.connect(self.close)
+        layout.addWidget(aizvert_poga)
+
 
 class Sakuma_ekrans(QMainWindow):
     def __init__(self):
@@ -67,9 +105,14 @@ class Sakuma_ekrans(QMainWindow):
         self.layout.addWidget(self.turpinat)
 
         self.autori = QPushButton("Autori", self)
-        self.autori.clicked.connect(self.Parada_autors)
+        self.autori.clicked.connect(self.Parada_autorus)
         self.autori.setStyleSheet("background-color: YELLOW; color: black;")
         self.layout.addWidget(self.autori)
+
+        self.Noteikumi = QPushButton("Noteikumi", self)
+        self.Noteikumi.clicked.connect(self.Parada_noteikumus)
+        self.Noteikumi.setStyleSheet("background-color: light-blue; color: white;")
+        self.layout.addWidget(self.Noteikumi)
 
         self.iziet = QPushButton("Iziet", self)
         self.iziet.clicked.connect(self.close)
@@ -78,11 +121,17 @@ class Sakuma_ekrans(QMainWindow):
 
         self.Galvenais_Ekraans = None
         self.AutoruLogs = None
+        self.NoteikumuLogs = None
 
-    def Parada_autors(self):
+    def Parada_autorus(self):
         if self.AutoruLogs is None or not self.AutoruLogs.isVisible():
             self.AutoruLogs = AutoriLogs()
             self.AutoruLogs.show()
+
+    def Parada_noteikumus(self):
+        if self.NoteikumuLogs is None or not self.NoteikumuLogs.isVisible():
+            self.NoteikumuLogs = NoteikumuLogs()
+            self.NoteikumuLogs.show()
 
     def Parada_Galveno(self):
         if self.Galvenais_Ekraans is None or not self.Galvenais_Ekraans.isVisible():
@@ -202,6 +251,8 @@ class Galvenais_Ekraans(QMainWindow):
         self.result_label = QLabel(f"Tava izvēlētā dziesma: {self.izveleta_dziesma}", self)
         self.layout.addWidget(self.result_label)
 
+        saglabat_statistiku(self.izveleta_grupa, self.izveleta_dziesma)
+
         self.muzikas_bilde()
         self.Atskano()
     
@@ -233,22 +284,28 @@ class Galvenais_Ekraans(QMainWindow):
     def Atskano(self):
         dziesmas_cels = os.path.join(dir, "Muzika", f"{self.izveleta_grupa}", f"{self.izveleta_dziesma}.wav")
 
-        self.EXITbutton.clicked.connect(pygame.mixer.music.stop)
-
         if not os.path.exists(dziesmas_cels):
             print(f"Nevar atrast dziesmu: {dziesmas_cels}")
             self.PLAYbutton.setEnabled(True)
             self.RESUMEbutton.setEnabled(False)
             self.STOPbutton.setEnabled(False)
-        else:
+            return
+        
+        if not pygame.mixer.get_init():
             pygame.mixer.init()
+            
             pygame.mixer.music.load(dziesmas_cels)
             pygame.mixer.music.play()
             print(f"Atskaņo: {dziesmas_cels}")
 
+            self.EXITbutton.clicked.connect(pygame.mixer.music.stop)
             self.PLAYbutton.setEnabled(False)
             self.RESUMEbutton.setEnabled(False)
             self.STOPbutton.setEnabled(True)
+
+            if not hasattr(self, 'exit_connected'):
+                self.EXITbutton.clicked.connect(pygame.mixer.music.stop)
+                self.exit_connected = True  # Marķē, ka piesaiste veikta
 
             def updatot_pogas():
                 if pygame.mixer.music.get_busy():
@@ -259,11 +316,6 @@ class Galvenais_Ekraans(QMainWindow):
                     self.STOPbutton.setEnabled(False)
 
             QTimer.singleShot(200, updatot_pogas)
-
-        
-
-        
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
